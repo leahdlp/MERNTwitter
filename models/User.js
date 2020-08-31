@@ -21,6 +21,7 @@ const UserSchema = new Schema({
         type: Date,
         default: Date.now
     } 
+    // timestamps: true
 });
 
 // after we create schema we will use mongoose's built in model function passing

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../../models/User");
 const bcrypt = require("bcryptjs");
+const User = require("../../models/User");
 const keys = require('../../config/keys');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
@@ -58,7 +58,27 @@ router.post('/register', (req, res) => {
                         // after hashing it is safe to save our user to our db
                         // after we save the user we send it to the frontend
                         newUser.save()
-                            .then(user => res.json(user))
+                            .then(user => {
+                                const payload = { 
+                                    id: user.id, 
+                                    // handle: user.handle, 
+                                    email: user.email
+                                };
+
+                                jwt.sign(
+                                    payload, 
+                                    keys.secretOrKey, 
+                                    { expiresIn: 3600 },
+                                    (err, token) => {
+                                        debugger;
+                                        res.json({
+                                            success: true,
+                                            token: "Bearer " + token
+                                        })
+                                    }
+                                )
+                            })
+                            // .then(user => res.json(user))
                             .catch(err => console.log(err))
                             // can also say res.send but we know user is a json 
                             // object so we might as well do this ^
@@ -98,7 +118,7 @@ router.post('/login', (req, res) => {
                     if (isMatch) {
                         const payload = {
                             id: user.id,
-                            handle: user.handle,
+                            // handle: user.handle,
                             email: user.email,
                         }
                         jwt.sign(
@@ -118,6 +138,14 @@ router.post('/login', (req, res) => {
                     }
                 })
         })
+})
+
+router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
+    res.json({
+        id: req.user.id,
+        handle: req.user.handle,
+        email: req.user.email
+    });
 })
 
 module.exports = router;
